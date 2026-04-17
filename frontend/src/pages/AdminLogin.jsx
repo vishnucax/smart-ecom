@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faShieldAlt, faSignInAlt, faSpinner } from '@fortawesome/free-solid-svg-icons'
 
 export default function AdminLogin() {
   const [form, setForm] = useState({ email: '', password: '' })
@@ -30,7 +32,11 @@ export default function AdminLogin() {
     <div className="min-h-[80vh] flex items-center justify-center px-4">
       <div className="bg-gray-900 border border-gray-800 p-8 rounded-3xl w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="text-4xl mb-2">🔐</div>
+          <div className="flex justify-center mb-4">
+            <div className="w-16 h-16 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center">
+              <FontAwesomeIcon icon={faShieldAlt} className="text-blue-400 text-3xl" />
+            </div>
+          </div>
           <h1 className="text-2xl font-bold">Admin Login</h1>
           <p className="text-gray-400 text-sm">Enter your credentials to manage SmartShop</p>
         </div>
@@ -69,9 +75,13 @@ export default function AdminLogin() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition mt-4 disabled:bg-gray-700"
+            className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition mt-4 disabled:bg-gray-700"
           >
-            {loading ? 'Verifying...' : 'Login to Dashboard'}
+            {loading ? (
+              <><FontAwesomeIcon icon={faSpinner} spin /> Verifying...</>
+            ) : (
+              <><FontAwesomeIcon icon={faSignInAlt} /> Login to Dashboard</>
+            )}
           </button>
         </form>
       </div>

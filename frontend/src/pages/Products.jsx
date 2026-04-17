@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faBox, faCartPlus, faBolt, faShoppingCart, faCheckCircle } from '@fortawesome/free-solid-svg-icons'
 
 export default function Products({ setCartCount }) {
   const [products, setProducts] = useState([])
@@ -22,8 +24,6 @@ export default function Products({ setCartCount }) {
         setTimeout(() => setAddedMap(prev => ({ ...prev, [product.id]: false })), 2000)
       })
   }
-
-
 
   return (
     <div className="max-w-6xl mx-auto px-8 py-10">
@@ -51,27 +51,27 @@ export default function Products({ setCartCount }) {
                   <img src={product.image_url} alt={product.name} className="object-cover h-full w-full" />
                 </div>
               ) : (
-                <div className="h-48 mb-4 rounded-xl bg-gray-800 flex items-center justify-center text-6xl">
-                  📦
+                <div className="h-48 mb-4 rounded-xl bg-gray-800 flex items-center justify-center text-gray-600">
+                  <FontAwesomeIcon icon={faBox} className="text-6xl" />
                 </div>
               )}
               <h2 className="text-xl font-bold mt-2 mb-1">{product.name}</h2>
               <p className="text-green-400 text-2xl font-bold mb-1">₹{Number(product.price).toLocaleString()}</p>
-              <p className="text-gray-500 text-sm mb-6">
-                {product.quantity} in stock
-              </p>
+              <p className="text-gray-500 text-sm mb-6">{product.quantity} in stock</p>
               <div className="mt-auto flex gap-2">
                 <button
                   onClick={() => addToCart(product)}
                   disabled={addedMap[product.id]}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:text-gray-500 text-white font-semibold py-2 px-4 rounded-xl transition text-sm"
+                  className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:text-gray-500 text-white font-semibold py-2 px-4 rounded-xl transition text-sm"
                 >
-                  {addedMap[product.id] ? '✅ Added!' : 'Add to Cart'}
+                  <FontAwesomeIcon icon={addedMap[product.id] ? faCheckCircle : faCartPlus} />
+                  {addedMap[product.id] ? 'Added!' : 'Add to Cart'}
                 </button>
                 <button
                   onClick={() => { addToCart(product); setTimeout(() => navigate('/cart'), 500) }}
-                  className="flex-1 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 text-white font-semibold py-2 px-4 rounded-xl transition text-sm"
+                  className="flex-1 flex items-center justify-center gap-2 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-xl transition text-sm"
                 >
+                  <FontAwesomeIcon icon={faBolt} />
                   Buy Now
                 </button>
               </div>
@@ -83,9 +83,10 @@ export default function Products({ setCartCount }) {
       <div className="mt-10 text-center">
         <button
           onClick={() => navigate('/cart')}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-xl transition"
+          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-xl transition"
         >
-          View Cart 🛍️
+          <FontAwesomeIcon icon={faShoppingCart} />
+          View Cart
         </button>
       </div>
     </div>

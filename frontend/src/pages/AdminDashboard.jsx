@@ -1,12 +1,19 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import {
+  faPencilAlt, faTrash, faPlus, faTimes, faSignOutAlt,
+  faBox, faCheckCircle, faExclamationCircle, faSpinner
+} from '@fortawesome/free-solid-svg-icons'
 
 export default function AdminDashboard() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState({ name: '', price: '', quantity: '', image_url: '' })
   const [editingId, setEditingId] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [toast, setToast] = useState(null)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -17,63 +24,116 @@ export default function AdminDashboard() {
     fetchProducts()
   }, [])
 
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type })
+    setTimeout(() => setToast(null), 3000)
+  }
+
   const fetchProducts = () => {
     setLoading(true)
     axios.get('http://localhost:5001/inventory')
       .then(res => setProducts(res.data))
+      .catch(() => showToast('Failed to load products', 'error'))
       .finally(() => setLoading(false))
   }
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    setSubmitting(true)
+
+    const payload = {
+      name: form.name,
+      price: parseFloat(form.price),
+      quantity: parseInt(form.quantity),
+      image_url: form.image_url || ''
+    }
+
     if (editingId) {
-      axios.put(`http://localhost:5001/inventory/${editingId}`, { ...form, full_update: true })
+      axios.put(`http://localhost:5001/inventory/${editingId}`, { ...payload, full_update: true })
         .then(() => {
           fetchProducts()
           setEditingId(null)
           setForm({ name: '', price: '', quantity: '', image_url: '' })
+          showToast('Product updated successfully!')
         })
+        .catch(err => showToast(err.response?.data?.error || 'Update failed', 'error'))
+        .finally(() => setSubmitting(false))
     } else {
-      axios.post('http://localhost:5001/inventory', form)
+      axios.post('http://localhost:5001/inventory', payload)
         .then(() => {
           fetchProducts()
           setForm({ name: '', price: '', quantity: '', image_url: '' })
+          showToast('Product added successfully!')
         })
+        .catch(err => showToast(err.response?.data?.error || 'Failed to add product', 'error'))
+        .finally(() => setSubmitting(false))
     }
   }
 
   const handleDelete = (id) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       axios.delete(`http://localhost:5001/inventory/${id}`)
-        .then(() => fetchProducts())
+        .then(() => {
+          fetchProducts()
+          showToast('Product deleted')
+        })
+        .catch(() => showToast('Delete failed', 'error'))
     }
   }
 
   const handleEdit = (product) => {
     setEditingId(product.id)
-    setForm({ name: product.name, price: product.price, quantity: product.quantity, image_url: product.image_url || '' })
+    setForm({
+      name: product.name,
+      price: product.price,
+      quantity: product.quantity,
+      image_url: product.image_url || ''
+    })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleCancel = () => {
+    setEditingId(null)
+    setForm({ name: '', price: '', quantity: '', image_url: '' })
   }
 
   return (
     <div className="max-w-6xl mx-auto px-8 py-10">
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl text-sm font-semibold transition-all
+          ${toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
+          <FontAwesomeIcon icon={toast.type === 'success' ? faCheckCircle : faExclamationCircle} />
+          {toast.message}
+        </div>
+      )}
+
       <div className="flex justify-between items-center mb-10">
         <div>
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
           <p className="text-gray-400">Manage your product inventory</p>
         </div>
-        <button 
-          onClick={() => { sessionStorage.removeItem('adminToken'); navigate('/admin/login') }}
-          className="bg-gray-800 hover:bg-red-500/20 hover:text-red-500 border border-gray-700 px-4 py-2 rounded-xl text-sm transition"
-        >
-          Logout
-        </button>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-gray-400">{products.length} products</span>
+          <button
+            onClick={() => { sessionStorage.removeItem('adminToken'); navigate('/admin/login') }}
+            className="flex items-center gap-2 bg-gray-800 hover:bg-red-500/20 hover:text-red-500 border border-gray-700 px-4 py-2 rounded-xl text-sm transition"
+          >
+            <FontAwesomeIcon icon={faSignOutAlt} />
+            Logout
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         {/* Form Section */}
         <div className="lg:col-span-1">
           <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl sticky top-24">
-            <h2 className="text-xl font-bold mb-4">{editingId ? 'Edit Product' : 'Add New Product'}</h2>
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <FontAwesomeIcon icon={editingId ? faPencilAlt : faPlus} className="text-blue-400" />
+              {editingId ? 'Edit Product' : 'Add New Product'}
+            </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="text-sm text-gray-400 mb-1 block">Product Name</label>
@@ -83,29 +143,32 @@ export default function AdminDashboard() {
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   placeholder="e.g. Smart Watch"
                   required
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition"
                 />
               </div>
               <div>
                 <label className="text-sm text-gray-400 mb-1 block">Price (₹)</label>
                 <input
                   type="number"
+                  min="0"
+                  step="0.01"
                   value={form.price}
                   onChange={(e) => setForm({ ...form, price: e.target.value })}
                   placeholder="5000"
                   required
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition"
                 />
               </div>
               <div>
                 <label className="text-sm text-gray-400 mb-1 block">Quantity</label>
                 <input
                   type="number"
+                  min="0"
                   value={form.quantity}
                   onChange={(e) => setForm({ ...form, quantity: e.target.value })}
                   placeholder="100"
                   required
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition"
                 />
               </div>
               <div>
@@ -115,23 +178,42 @@ export default function AdminDashboard() {
                   value={form.image_url}
                   onChange={(e) => setForm({ ...form, image_url: e.target.value })}
                   placeholder="https://example.com/image.jpg"
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition"
                 />
               </div>
+
+              {/* Image Preview */}
+              {form.image_url && (
+                <div className="rounded-xl overflow-hidden h-32 bg-gray-800">
+                  <img
+                    src={form.image_url}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                    onError={(e) => { e.target.style.display = 'none' }}
+                  />
+                </div>
+              )}
+
               <div className="flex gap-2 pt-2">
                 <button
                   type="submit"
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition"
+                  disabled={submitting}
+                  className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 text-white font-semibold py-3 rounded-xl transition"
                 >
-                  {editingId ? 'Update Product' : 'Add Product'}
+                  {submitting ? (
+                    <><FontAwesomeIcon icon={faSpinner} spin /> Saving...</>
+                  ) : (
+                    <><FontAwesomeIcon icon={editingId ? faPencilAlt : faPlus} />
+                      {editingId ? 'Update Product' : 'Add Product'}</>
+                  )}
                 </button>
                 {editingId && (
                   <button
                     type="button"
-                    onClick={() => { setEditingId(null); setForm({ name: '', price: '', quantity: '', image_url: '' }) }}
-                    className="bg-gray-700 hover:bg-gray-600 px-4 rounded-xl transition"
+                    onClick={handleCancel}
+                    className="flex items-center gap-1 bg-gray-700 hover:bg-gray-600 px-4 rounded-xl transition text-sm"
                   >
-                    Cancel
+                    <FontAwesomeIcon icon={faTimes} /> Cancel
                   </button>
                 )}
               </div>
@@ -142,7 +224,10 @@ export default function AdminDashboard() {
         {/* List Section */}
         <div className="lg:col-span-2">
           {loading ? (
-            <div className="text-center py-20 text-gray-500">Loading products...</div>
+            <div className="text-center py-20 text-gray-500 flex flex-col items-center gap-3">
+              <FontAwesomeIcon icon={faSpinner} spin className="text-3xl text-blue-400" />
+              Loading products...
+            </div>
           ) : (
             <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
               <table className="w-full text-left">
@@ -156,24 +241,34 @@ export default function AdminDashboard() {
                 </thead>
                 <tbody className="divide-y divide-gray-800">
                   {products.map(product => (
-                    <tr key={product.id} className="hover:bg-gray-800/30 transition">
-                      <td className="px-6 py-4 flex items-center gap-3">
-                        {product.image_url ? (
-                          <img src={product.image_url} alt={product.name} className="w-10 h-10 object-cover rounded-lg bg-gray-800" />
-                        ) : (
-                          <div className="w-10 h-10 bg-gray-800 flex items-center justify-center rounded-lg text-lg">📦</div>
-                        )}
-                        <div>
-                          <div className="font-medium">{product.name}</div>
-                          <div className="text-xs text-gray-500">ID: {product.id}</div>
+                    <tr key={product.id} className={`hover:bg-gray-800/30 transition ${editingId === product.id ? 'bg-blue-900/10 border-l-2 border-blue-500' : ''}`}>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          {product.image_url ? (
+                            <img src={product.image_url} alt={product.name} className="w-10 h-10 object-cover rounded-lg bg-gray-800" />
+                          ) : (
+                            <div className="w-10 h-10 bg-gray-800 flex items-center justify-center rounded-lg text-gray-500">
+                              <FontAwesomeIcon icon={faBox} />
+                            </div>
+                          )}
+                          <div>
+                            <div className="font-medium">{product.name}</div>
+                            <div className="text-xs text-gray-500">ID: {product.id}</div>
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right text-green-400 font-medium">
                         ₹{Number(product.price).toLocaleString()}
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${product.quantity > 10 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
-                          {product.quantity}
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          product.quantity > 10
+                            ? 'bg-green-500/10 text-green-500'
+                            : product.quantity > 0
+                              ? 'bg-yellow-500/10 text-yellow-500'
+                              : 'bg-red-500/10 text-red-500'
+                        }`}>
+                          {product.quantity === 0 ? 'Out of Stock' : product.quantity}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
@@ -183,14 +278,14 @@ export default function AdminDashboard() {
                             className="bg-blue-600/10 text-blue-500 hover:bg-blue-600 hover:text-white p-2 rounded-lg transition"
                             title="Edit"
                           >
-                            ✏️
+                            <FontAwesomeIcon icon={faPencilAlt} />
                           </button>
                           <button
                             onClick={() => handleDelete(product.id)}
                             className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white p-2 rounded-lg transition"
                             title="Delete"
                           >
-                            🗑️
+                            <FontAwesomeIcon icon={faTrash} />
                           </button>
                         </div>
                       </td>
@@ -198,7 +293,7 @@ export default function AdminDashboard() {
                   ))}
                   {products.length === 0 && (
                     <tr>
-                      <td colSpan="4" className="text-center py-20 text-gray-500">No products found.</td>
+                      <td colSpan="4" className="text-center py-20 text-gray-500">No products found. Add your first product!</td>
                     </tr>
                   )}
                 </tbody>

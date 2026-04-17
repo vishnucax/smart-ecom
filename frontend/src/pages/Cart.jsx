@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faBox, faTrash, faArrowRight, faTag, faShoppingCart } from '@fortawesome/free-solid-svg-icons'
 
 export default function Cart({ setCartCount }) {
   const [cart, setCart] = useState([])
@@ -38,11 +40,11 @@ export default function Cart({ setCartCount }) {
     axios.post('http://localhost:5003/discount', { code: discountCode, original_price: total })
       .then(res => {
         if (res.data.discount_percent === 0) {
-          setMessage({ text: '❌ Invalid discount code', type: 'error' })
+          setMessage({ text: 'Invalid discount code', type: 'error' })
           setDiscountResult(null)
         } else {
           setDiscountResult(res.data)
-          setMessage({ text: `✅ ${discountCode} applied — ${res.data.discount_percent}% off!`, type: 'success' })
+          setMessage({ text: `${discountCode} applied — ${res.data.discount_percent}% off!`, type: 'success' })
         }
       })
   }
@@ -60,7 +62,7 @@ export default function Cart({ setCartCount }) {
         <p className="text-gray-400">Loading cart...</p>
       ) : cart.length === 0 ? (
         <div className="text-center py-20 bg-gray-900 border border-gray-800 rounded-2xl">
-          <p className="text-5xl mb-4">🛒</p>
+          <FontAwesomeIcon icon={faShoppingCart} className="text-5xl text-gray-600 mb-4" />
           <p className="text-gray-400 text-xl mb-6">Your cart is empty</p>
           <button onClick={() => navigate('/')} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-xl transition">
             Shop Now
@@ -77,7 +79,9 @@ export default function Cart({ setCartCount }) {
                   {item.image_url ? (
                     <img src={item.image_url} alt={item.product_name} className="w-16 h-16 object-cover rounded-xl bg-gray-800" />
                   ) : (
-                    <div className="w-16 h-16 bg-gray-800 flex items-center justify-center rounded-xl text-3xl">📦</div>
+                    <div className="w-16 h-16 bg-gray-800 flex items-center justify-center rounded-xl text-gray-600">
+                      <FontAwesomeIcon icon={faBox} className="text-2xl" />
+                    </div>
                   )}
                   <div>
                     <h3 className="font-bold text-lg">{item.product_name}</h3>
@@ -89,19 +93,19 @@ export default function Cart({ setCartCount }) {
                   <p className="text-green-400 font-bold text-xl">
                     ₹{(Number(item.price) * item.quantity).toLocaleString()}
                   </p>
-                  <button 
+                  <button
                     onClick={() => handleRemove(item.id)}
                     className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white p-2 rounded-lg transition"
                     title="Remove item"
                   >
-                    🗑️
+                    <FontAwesomeIcon icon={faTrash} />
                   </button>
                 </div>
               </div>
             ))}
 
             <button onClick={() => navigate('/')} className="text-blue-400 hover:text-blue-300 text-sm transition">
-              ← Continue Shopping
+              &larr; Continue Shopping
             </button>
           </div>
 
@@ -128,7 +132,9 @@ export default function Cart({ setCartCount }) {
 
             {/* Discount Code */}
             <div className="mb-5">
-              <p className="text-sm text-gray-400 mb-2">Have a coupon?</p>
+              <p className="text-sm text-gray-400 mb-2 flex items-center gap-1">
+                <FontAwesomeIcon icon={faTag} /> Have a coupon?
+              </p>
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -153,9 +159,9 @@ export default function Cart({ setCartCount }) {
 
             <button
               onClick={() => navigate('/checkout', { state: { cart, total, discountCode: discountResult ? discountCode : null, discountResult, finalAmount } })}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition"
+              className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition"
             >
-              Proceed to Checkout →
+              Proceed to Checkout <FontAwesomeIcon icon={faArrowRight} />
             </button>
           </div>
         </div>

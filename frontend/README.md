@@ -154,12 +154,3 @@ http://localhost:5173
 This project is licensed under the **MIT License**
 
 ---
-
-## 👨‍💻 Author
-
-**Albin Shaji**
-MCA Student | Palakkad, Kerala
-
-[![GitHub](https://img.shields.io/badge/GitHub-albin--shaji-black?logo=github)](https://github.com/albin-shaji)
-[![Portfolio](https://img.shields.io/badge/Portfolio-albinshaji.com-blue?logo=google-chrome)](https://albinshaji.com)
-[![Email](https://img.shields.io/badge/Email-albinshaji39k@gmail.com-red?logo=gmail)](mailto:albinshaji39k@gmail.com)

@@ -18,11 +18,11 @@ def get_db():
 @app.route('/admin/login', methods=['POST'])
 def admin_login():
     data = request.json
-    username = data.get('username')
+    password = data.get('password')
     email = data.get('email')
 
     # Hardcoded credentials as requested
-    if username == "admin" and email == "admin@gmail.com":
+    if password == "admin" and email == "admin@gmail.com":
         return jsonify({"message": "Login successful", "token": "fake-admin-token"}), 200
     return jsonify({"error": "Invalid credentials"}), 401
 

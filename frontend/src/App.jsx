@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import axios from 'axios'
 import Navbar from './components/Navbar'
 import Products from './pages/Products'
 import Cart from './pages/Cart'
@@ -10,6 +11,16 @@ import AdminDashboard from './pages/AdminDashboard'
 
 export default function App() {
   const [cartCount, setCartCount] = useState(0)
+
+  // Sync cart count from API on initial load
+  useEffect(() => {
+    axios.get('http://localhost:5002/cart')
+      .then(res => {
+        const count = res.data.cart_items?.reduce((sum, item) => sum + item.quantity, 0) || 0
+        setCartCount(count)
+      })
+      .catch(() => setCartCount(0))
+  }, [])
 
   return (
     <Router>

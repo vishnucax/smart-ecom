@@ -249,13 +249,3 @@ Open http://localhost:15672 → Login: guest / guest → Queues tab → payment_
 
 This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
----
-
-## 👨‍💻 Author
-
-**Albin Shaji**
-MCA Student | Palakkad, Kerala
-
-[![GitHub](https://img.shields.io/badge/GitHub-albin--shaji-black?logo=github)](https://github.com/albin-shaji)
-[![Portfolio](https://img.shields.io/badge/Portfolio-albinshaji.com-blue?logo=google-chrome)](https://albinshaji.com)
-[![Email](https://img.shields.io/badge/Email-albinshaji39k@gmail.com-red?logo=gmail)](mailto:albinshaji39k@gmail.com)

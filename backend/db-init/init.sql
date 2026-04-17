@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS inventory (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
-    quantity INT NOT NULL
+    quantity INT NOT NULL,
+    image_url VARCHAR(500) DEFAULT ''
 );
 
 -- Cart table
@@ -15,7 +16,8 @@ CREATE TABLE IF NOT EXISTS cart (
     product_id INT NOT NULL,
     product_name VARCHAR(255) NOT NULL,
     quantity INT NOT NULL,
-    price DECIMAL(10, 2) NOT NULL
+    price DECIMAL(10, 2) NOT NULL,
+    image_url VARCHAR(500) DEFAULT ''
 );
 
 -- Payments table
@@ -32,7 +34,7 @@ CREATE TABLE IF NOT EXISTS payments (
 );
 
 -- Insert some sample inventory items
-INSERT INTO inventory (name, price, quantity) VALUES
-('Laptop', 50000.00, 10),
-('Phone', 15000.00, 25),
-('Headphones', 2000.00, 50);
+INSERT INTO inventory (name, price, quantity, image_url) VALUES
+('Laptop', 50000.00, 10, ''),
+('Phone', 15000.00, 25, ''),
+('Headphones', 2000.00, 50, '');
