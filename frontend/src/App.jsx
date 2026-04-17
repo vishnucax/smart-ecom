@@ -24,7 +24,7 @@ export default function App() {
 
   return (
     <Router>
-      <div className="min-h-screen bg-gray-950 text-white">
+      <div className="min-h-screen bg-slate-50 text-slate-800 font-sans selection:bg-blue-500 selection:text-white transition-colors duration-300">
         <Navbar cartCount={cartCount} />
         <Routes>
           <Route path="/" element={<Products setCartCount={setCartCount} />} />

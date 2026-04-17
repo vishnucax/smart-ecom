@@ -47,55 +47,68 @@ export default function Cart({ setCartCount }) {
           setMessage({ text: `${discountCode} applied — ${res.data.discount_percent}% off!`, type: 'success' })
         }
       })
+      .catch(err => {
+        console.error('Discount apply error:', err)
+        setMessage({ text: 'Error connecting to discount service', type: 'error' })
+        setDiscountResult(null)
+      })
   }
 
   const finalAmount = discountResult ? discountResult.final_price : total
 
   return (
-    <div className="max-w-5xl mx-auto px-8 py-10">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">Your Cart</h1>
-        <p className="text-gray-400">Review your items before checkout</p>
+    <div className="max-w-6xl mx-auto px-6 py-12 animate-fade-in-up">
+      <div className="mb-10">
+        <h1 className="text-4xl font-extrabold mb-3 text-slate-800 tracking-tight">Your Cart</h1>
+        <p className="text-slate-500 text-lg">Review your items before checkout</p>
       </div>
 
       {loading ? (
-        <p className="text-gray-400">Loading cart...</p>
+        <div className="flex justify-center py-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
       ) : cart.length === 0 ? (
-        <div className="text-center py-20 bg-gray-900 border border-gray-800 rounded-2xl">
-          <FontAwesomeIcon icon={faShoppingCart} className="text-5xl text-gray-600 mb-4" />
-          <p className="text-gray-400 text-xl mb-6">Your cart is empty</p>
-          <button onClick={() => navigate('/')} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-xl transition">
-            Shop Now
+        <div className="text-center py-24 bg-white border border-slate-100 rounded-3xl shadow-sm">
+          <div className="inline-flex items-center justify-center w-24 h-24 bg-slate-50 rounded-full mb-6">
+            <FontAwesomeIcon icon={faShoppingCart} className="text-4xl text-slate-300" />
+          </div>
+          <h3 className="text-2xl font-bold text-slate-700 mb-2">Your cart is empty</h3>
+          <p className="text-slate-500 text-lg mb-8">Looks like you haven't added anything yet.</p>
+          <button onClick={() => navigate('/')} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-10 rounded-full transition-all shadow-md shadow-blue-600/20 hover:shadow-lg hover:shadow-blue-600/30 hover:-translate-y-1">
+            Start Shopping
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="flex flex-col lg:flex-row gap-10">
 
           {/* Cart Items */}
-          <div className="lg:col-span-2 space-y-4">
-            {cart.map(item => (
-              <div key={item.id} className="bg-gray-900 border border-gray-800 rounded-2xl p-5 flex items-center justify-between">
-                <div className="flex items-center gap-4">
+          <div className="lg:w-2/3 space-y-6">
+            {cart.map((item, index) => (
+              <div key={item.id} 
+                   className="bg-white border border-slate-100 rounded-3xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-sm hover:shadow-md transition-shadow group"
+                   style={{ animationDelay: `${index * 100}ms` }}>
+                <div className="flex items-center gap-5 w-full sm:w-auto">
                   {item.image_url ? (
-                    <img src={item.image_url} alt={item.product_name} className="w-16 h-16 object-cover rounded-xl bg-gray-800" />
+                    <img src={item.image_url} alt={item.product_name} className="w-24 h-24 object-cover rounded-2xl bg-slate-50 shadow-inner group-hover:scale-105 transition-transform" />
                   ) : (
-                    <div className="w-16 h-16 bg-gray-800 flex items-center justify-center rounded-xl text-gray-600">
-                      <FontAwesomeIcon icon={faBox} className="text-2xl" />
+                    <div className="w-24 h-24 bg-slate-50 flex items-center justify-center rounded-2xl text-slate-300 shadow-inner">
+                      <FontAwesomeIcon icon={faBox} className="text-3xl" />
                     </div>
                   )}
-                  <div>
-                    <h3 className="font-bold text-lg">{item.product_name}</h3>
-                    <p className="text-gray-400 text-sm">Quantity: {item.quantity}</p>
-                    <p className="text-gray-400 text-sm">₹{Number(item.price).toLocaleString()} each</p>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-xl text-slate-800 mb-1">{item.product_name}</h3>
+                    <p className="text-slate-500 text-sm mb-1 font-medium bg-slate-100 inline-block px-3 py-1 rounded-lg">Qty: {item.quantity}</p>
+                    <p className="text-slate-500 text-sm">₹{Number(item.price).toLocaleString()} each</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <p className="text-green-400 font-bold text-xl">
+                
+                <div className="flex items-center justify-between w-full sm:w-auto gap-6 sm:gap-8 border-t border-slate-100 sm:border-0 pt-4 sm:pt-0">
+                  <p className="text-blue-600 font-extrabold text-2xl">
                     ₹{(Number(item.price) * item.quantity).toLocaleString()}
                   </p>
                   <button
                     onClick={() => handleRemove(item.id)}
-                    className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white p-2 rounded-lg transition"
+                    className="bg-red-50 text-red-500 hover:bg-red-500 hover:text-white p-3 rounded-xl transition-colors shadow-sm"
                     title="Remove item"
                   >
                     <FontAwesomeIcon icon={faTrash} />
@@ -104,65 +117,70 @@ export default function Cart({ setCartCount }) {
               </div>
             ))}
 
-            <button onClick={() => navigate('/')} className="text-blue-400 hover:text-blue-300 text-sm transition">
-              &larr; Continue Shopping
-            </button>
+            <div className="pt-4">
+              <button onClick={() => navigate('/')} className="text-slate-500 hover:text-blue-600 font-semibold transition-colors flex items-center gap-2 group">
+                <span className="group-hover:-translate-x-1 transition-transform">&larr;</span> Continue Shopping
+              </button>
+            </div>
           </div>
 
           {/* Order Summary */}
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 h-fit">
-            <h2 className="text-xl font-bold mb-5">Order Summary</h2>
+          <div className="lg:w-1/3">
+            <div className="bg-white border border-slate-100 rounded-3xl p-8 sticky top-28 shadow-sm">
+              <h2 className="text-2xl font-extrabold mb-6 text-slate-800 tracking-tight">Order Summary</h2>
 
-            <div className="space-y-3 mb-5">
-              <div className="flex justify-between text-gray-400">
-                <span>Subtotal</span>
-                <span className="text-white">₹{total.toLocaleString()}</span>
-              </div>
-              {discountResult && (
-                <div className="flex justify-between text-green-400">
-                  <span>Discount ({discountResult.discount_percent}%)</span>
-                  <span>- ₹{discountResult.discount_amount.toLocaleString()}</span>
+              <div className="space-y-4 mb-6">
+                <div className="flex justify-between text-slate-600 font-medium">
+                  <span>Subtotal</span>
+                  <span className="text-slate-800">₹{total.toLocaleString()}</span>
                 </div>
-              )}
-              <div className="flex justify-between font-bold text-lg pt-3 border-t border-gray-700">
-                <span>Total</span>
-                <span className="text-green-400">₹{finalAmount.toLocaleString()}</span>
+                {discountResult && (
+                  <div className="flex justify-between text-green-600 font-medium bg-green-50 p-3 rounded-xl">
+                    <span>Discount ({discountResult.discount_percent}%)</span>
+                    <span>- ₹{discountResult.discount_amount.toLocaleString()}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-extrabold text-xl pt-6 border-t border-slate-100">
+                  <span className="text-slate-800">Total</span>
+                  <span className="text-blue-600">₹{finalAmount.toLocaleString()}</span>
+                </div>
               </div>
-            </div>
 
-            {/* Discount Code */}
-            <div className="mb-5">
-              <p className="text-sm text-gray-400 mb-2 flex items-center gap-1">
-                <FontAwesomeIcon icon={faTag} /> Have a coupon?
-              </p>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={discountCode}
-                  onChange={e => setDiscountCode(e.target.value.toUpperCase())}
-                  placeholder="NEWYEAR"
-                  className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-                />
-                <button
-                  onClick={applyDiscount}
-                  className="bg-yellow-600 hover:bg-yellow-700 text-white font-semibold px-3 py-2 rounded-xl text-sm transition"
-                >
-                  Apply
-                </button>
-              </div>
-              {message.text && (
-                <p className={`text-sm mt-2 ${message.type === 'success' ? 'text-green-400' : 'text-red-400'}`}>
-                  {message.text}
+              {/* Discount Code */}
+              <div className="mb-8 p-5 bg-slate-50 rounded-2xl border border-slate-100">
+                <p className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                  <FontAwesomeIcon icon={faTag} className="text-blue-500" /> Have a coupon?
                 </p>
-              )}
-            </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={discountCode}
+                    onChange={e => setDiscountCode(e.target.value.toUpperCase())}
+                    placeholder="e.g. NEWYEAR"
+                    className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium placeholder-slate-400 uppercase tracking-widest text-slate-700"
+                  />
+                  <button
+                    onClick={applyDiscount}
+                    className="bg-slate-800 hover:bg-black text-white font-bold px-5 py-3 rounded-xl text-sm transition-colors shadow-md shadow-slate-800/10"
+                  >
+                    Apply
+                  </button>
+                </div>
+                {message.text && (
+                  <p className={`text-sm mt-3 font-medium flex items-center gap-2 ${message.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${message.type === 'success' ? 'bg-green-600' : 'bg-red-500'}`}></span>
+                    {message.text}
+                  </p>
+                )}
+              </div>
 
-            <button
-              onClick={() => navigate('/checkout', { state: { cart, total, discountCode: discountResult ? discountCode : null, discountResult, finalAmount } })}
-              className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition"
-            >
-              Proceed to Checkout <FontAwesomeIcon icon={faArrowRight} />
-            </button>
+              <button
+                onClick={() => navigate('/checkout', { state: { cart, total, discountCode: discountResult ? discountCode : null, discountResult, finalAmount } })}
+                className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-4 px-6 rounded-2xl transition-all shadow-md shadow-blue-600/20 hover:shadow-lg hover:shadow-blue-600/30 hover:-translate-y-1 group tracking-wide"
+              >
+                Proceed to Checkout <FontAwesomeIcon icon={faArrowRight} className="group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
           </div>
         </div>
       )}

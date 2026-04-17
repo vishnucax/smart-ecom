@@ -66,8 +66,12 @@ def process_payment():
         if not product_id:
             return jsonify({"error": "Product ID is required"}), 400
 
+        # Allow local testing manually without docker by using localhost as fallback
+        inventory_host = os.environ.get("INVENTORY_HOST", "inventory")
+        discount_host = os.environ.get("DISCOUNT_HOST", "discount")
+
         # Get product from inventory
-        inv_response = requests.get(f"http://inventory:5001/inventory/{product_id}")
+        inv_response = requests.get(f"http://{inventory_host}:5001/inventory/{product_id}")
         if inv_response.status_code != 200:
             return jsonify({"error": "Product not found"}), 404
 
@@ -78,18 +82,22 @@ def process_payment():
 
         # Apply discount if code provided
         if discount_code:
-            disc_response = requests.post(
-                "http://discount:5003/discount",
-                json={"code": discount_code, "original_price": original_price}
-            )
-            if disc_response.status_code == 200:
-                disc_data = disc_response.json()
-                discount_amount = disc_data.get('discount_amount', 0)
-                final_amount = disc_data.get('final_price', original_price)
+            try:
+                disc_response = requests.post(
+                    f"http://{discount_host}:5003/discount",
+                    json={"code": discount_code, "original_price": original_price}
+                )
+                if disc_response.status_code == 200:
+                    disc_data = disc_response.json()
+                    discount_amount = disc_data.get('discount_amount', 0)
+                    final_amount = disc_data.get('final_price', original_price)
+            except Exception as e:
+                print(f"Warning: Failed to reach discount service: {e}")
+                pass
 
         # Update inventory FIRST (Stock reservation)
         inv_update_res = requests.put(
-            f"http://inventory:5001/inventory/{product_id}",
+            f"http://{inventory_host}:5001/inventory/{product_id}",
             json={"quantity": quantity}
         )
         

@@ -29,27 +29,32 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4">
-      <div className="bg-gray-900 border border-gray-800 p-8 rounded-3xl w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center">
-              <FontAwesomeIcon icon={faShieldAlt} className="text-blue-400 text-3xl" />
+    <div className="min-h-[80vh] flex items-center justify-center px-4 animate-fade-in-up">
+      <div className="bg-white border border-slate-100 p-10 rounded-3xl w-full max-w-md shadow-xl shadow-slate-200/50 relative overflow-hidden">
+        {/* Decorative background shape */}
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-50 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+        <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-indigo-50 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+
+        <div className="text-center mb-10 relative z-10">
+          <div className="flex justify-center mb-6">
+            <div className="w-20 h-20 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center shadow-inner">
+              <FontAwesomeIcon icon={faShieldAlt} className="text-blue-600 text-3xl" />
             </div>
           </div>
-          <h1 className="text-2xl font-bold">Admin Login</h1>
-          <p className="text-gray-400 text-sm">Enter your credentials to manage SmartShop</p>
+          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">Admin Portal</h1>
+          <p className="text-slate-500 font-medium font-sm">Secure access to SmartShop Management</p>
         </div>
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/50 text-red-500 text-sm p-4 rounded-xl mb-6">
+          <div className="bg-red-50 border border-red-100 text-red-600 text-sm font-medium p-4 rounded-xl mb-6 flex items-center gap-3 relative z-10">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 block"></span>
             {error}
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-5 relative z-10">
           <div>
-            <label className="text-sm text-gray-400 mb-1 block">Email</label>
+            <label className="text-sm font-bold text-slate-700 mb-2 block">Email Address</label>
             <input
               type="email"
               name="email"
@@ -57,30 +62,30 @@ export default function AdminLogin() {
               onChange={handleChange}
               placeholder="admin@gmail.com"
               required
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-slate-800 placeholder-slate-400"
             />
           </div>
           <div>
-            <label className="text-sm text-gray-400 mb-1 block">Password</label>
+            <label className="text-sm font-bold text-slate-700 mb-2 block">Password</label>
             <input
               type="password"
               name="password"
               value={form.password}
               onChange={handleChange}
-              placeholder="admin"
+              placeholder="••••••••"
               required
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-slate-800 placeholder-slate-400"
             />
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition mt-4 disabled:bg-gray-700"
+            className="w-full flex items-center justify-center gap-3 bg-slate-900 hover:bg-black text-white font-bold py-4 rounded-xl transition-all mt-8 disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed shadow-md shadow-slate-900/20 hover:shadow-lg hover:-translate-y-1 group"
           >
             {loading ? (
-              <><FontAwesomeIcon icon={faSpinner} spin /> Verifying...</>
+              <><FontAwesomeIcon icon={faSpinner} spin /> Authenticating...</>
             ) : (
-              <><FontAwesomeIcon icon={faSignInAlt} /> Login to Dashboard</>
+              <><FontAwesomeIcon icon={faSignInAlt} className="group-hover:-translate-y-0.5 transition-transform" /> Access Dashboard</>
             )}
           </button>
         </form>
