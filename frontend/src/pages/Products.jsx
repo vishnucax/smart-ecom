@@ -2,19 +2,45 @@ import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faBox, faCartPlus, faBolt, faShoppingCart, faCheckCircle } from '@fortawesome/free-solid-svg-icons'
+import { faBox, faCartPlus, faBolt, faShoppingCart, faCheckCircle, faSearch, faSortAmountDown, faSortAmountUp } from '@fortawesome/free-solid-svg-icons'
 
 export default function Products({ setCartCount }) {
   const [products, setProducts] = useState([])
+  const [filteredProducts, setFilteredProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [addedMap, setAddedMap] = useState({})
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sortOrder, setSortOrder] = useState('none') // 'none', 'low', 'high'
   const navigate = useNavigate()
 
   useEffect(() => {
     axios.get('http://localhost:5001/inventory')
-      .then(res => { setProducts(res.data); setLoading(false) })
+      .then(res => { 
+        setProducts(res.data); 
+        setFilteredProducts(res.data);
+        setLoading(false) 
+      })
       .catch(() => setLoading(false))
   }, [])
+
+  // Search and Sort Logic
+  useEffect(() => {
+    let result = products.filter(p => p.quantity > 0)
+    
+    // Filter
+    if (searchQuery) {
+      result = result.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    }
+
+    // Sort
+    if (sortOrder === 'low') {
+      result.sort((a, b) => a.price - b.price)
+    } else if (sortOrder === 'high') {
+      result.sort((a, b) => b.price - a.price)
+    }
+
+    setFilteredProducts(result)
+  }, [searchQuery, sortOrder, products])
 
   const addToCart = (product) => {
     axios.post('http://localhost:5002/cart', { product_id: product.id, quantity: 1 })
@@ -27,9 +53,34 @@ export default function Products({ setCartCount }) {
 
   return (
     <div className="max-w-6xl mx-auto px-8 py-10">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">Our Products</h1>
-        <p className="text-gray-400">Browse and add items to your cart</p>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
+        <div>
+          <h1 className="text-4xl font-bold mb-2">Our Products</h1>
+          <p className="text-gray-400">Premium electronics and gadgets at your fingertips</p>
+        </div>
+        
+        {/* Search and Filter UI */}
+        <div className="w-full md:w-auto flex flex-col md:flex-row gap-4">
+          <div className="relative">
+            <FontAwesomeIcon icon={faSearch} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+            <input 
+              type="text"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-gray-900 border border-gray-800 rounded-xl pl-11 pr-4 py-2.5 text-sm w-full md:w-64 focus:outline-none focus:border-blue-500 transition"
+            />
+          </div>
+          <select 
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value)}
+            className="bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 transition cursor-pointer"
+          >
+            <option value="none">Sort by: Relevancy</option>
+            <option value="low">Price: Low to High</option>
+            <option value="high">Price: High to Low</option>
+          </select>
+        </div>
       </div>
 
       {loading ? (
@@ -42,13 +93,19 @@ export default function Products({ setCartCount }) {
             </div>
           ))}
         </div>
+      ) : filteredProducts.length === 0 ? (
+        <div className="text-center py-20 bg-gray-900 border border-gray-800 rounded-3xl">
+           <FontAwesomeIcon icon={faBox} className="text-5xl text-gray-700 mb-4" />
+           <p className="text-gray-400 text-lg">No products found matching "{searchQuery}"</p>
+           <button onClick={() => setSearchQuery('')} className="text-blue-500 text-sm mt-2 hover:underline">Clear search</button>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {products.filter(p => p.quantity > 0).map(product => (
-            <div key={product.id} className="bg-gray-900 border border-gray-800 rounded-2xl p-6 flex flex-col hover:border-gray-600 transition">
+          {filteredProducts.map(product => (
+            <div key={product.id} className="bg-gray-900 border border-gray-800 rounded-2xl p-6 flex flex-col hover:border-gray-600 transition group">
               {product.image_url ? (
-                <div className="h-48 mb-4 rounded-xl overflow-hidden bg-gray-800 flex items-center justify-center">
-                  <img src={product.image_url} alt={product.name} className="object-cover h-full w-full" />
+                <div className="h-48 mb-4 rounded-xl overflow-hidden bg-gray-800 flex items-center justify-center relative">
+                  <img src={product.image_url} alt={product.name} className="object-cover h-full w-full group-hover:scale-110 transition duration-500" />
                 </div>
               ) : (
                 <div className="h-48 mb-4 rounded-xl bg-gray-800 flex items-center justify-center text-gray-600">
@@ -62,14 +119,14 @@ export default function Products({ setCartCount }) {
                 <button
                   onClick={() => addToCart(product)}
                   disabled={addedMap[product.id]}
-                  className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:text-gray-500 text-white font-semibold py-2 px-4 rounded-xl transition text-sm"
+                  className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:text-gray-500 text-white font-semibold py-2.5 px-4 rounded-xl transition text-sm"
                 >
                   <FontAwesomeIcon icon={addedMap[product.id] ? faCheckCircle : faCartPlus} />
                   {addedMap[product.id] ? 'Added!' : 'Add to Cart'}
                 </button>
                 <button
                   onClick={() => { addToCart(product); setTimeout(() => navigate('/cart'), 500) }}
-                  className="flex-1 flex items-center justify-center gap-2 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-xl transition text-sm"
+                  className="flex-1 flex items-center justify-center gap-2 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2.5 px-4 rounded-xl transition text-sm"
                 >
                   <FontAwesomeIcon icon={faBolt} />
                   Buy Now
@@ -80,13 +137,13 @@ export default function Products({ setCartCount }) {
         </div>
       )}
 
-      <div className="mt-10 text-center">
+      <div className="mt-12 text-center">
         <button
           onClick={() => navigate('/cart')}
-          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-xl transition"
+          className="inline-flex items-center gap-3 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-10 rounded-2xl transition shadow-xl shadow-blue-900/20"
         >
           <FontAwesomeIcon icon={faShoppingCart} />
-          View Cart
+          Proceed to Cart
         </button>
       </div>
     </div>

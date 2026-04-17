@@ -39,6 +39,12 @@ def add_item():
         if not name or price is None or quantity is None:
             return jsonify({"error": "Missing required fields"}), 400
 
+        # Input Validation
+        if float(price) < 0:
+            return jsonify({"error": "Price cannot be negative"}), 400
+        if int(quantity) < 0:
+            return jsonify({"error": "Quantity cannot be negative"}), 400
+
         db = get_db()
         cursor = db.cursor()
         cursor.execute(
@@ -53,47 +59,67 @@ def add_item():
 # GET - Get specific item
 @app.route('/inventory/<int:item_id>', methods=['GET'])
 def get_item(item_id):
-    db = get_db()
-    cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM inventory WHERE id = %s", (item_id,))
-    item = cursor.fetchone()
-    if not item:
-        return jsonify({"error": "Item not found"}), 404
-    return jsonify(item)
+    try:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM inventory WHERE id = %s", (item_id,))
+        item = cursor.fetchone()
+        if not item:
+            return jsonify({"error": "Item not found"}), 404
+        return jsonify(item)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # GET ALL - Get all items
 @app.route('/inventory', methods=['GET'])
 def get_all_items():
-    db = get_db()
-    cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM inventory")
-    items = cursor.fetchall()
-    return jsonify(items)
+    try:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM inventory ORDER BY name ASC")
+        items = cursor.fetchall()
+        return jsonify(items)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # PUT - Full update or quantity adjust
 @app.route('/inventory/<int:item_id>', methods=['PUT'])
 def update_item(item_id):
-    data = request.json
-    db = get_db()
-    cursor = db.cursor()
+    try:
+        data = request.json
+        db = get_db()
+        cursor = db.cursor()
 
-    # If full update (Admin)
-    if 'full_update' in data and data['full_update']:
-        cursor.execute(
-            "UPDATE inventory SET name = %s, price = %s, quantity = %s, image_url = %s WHERE id = %s",
-            (data['name'], data['price'], data['quantity'], data.get('image_url', ''), item_id)
-        )
-    else:
-        # Stock adjustment (Frontend/Checkout)
-        cursor.execute(
-            "UPDATE inventory SET quantity = quantity - %s WHERE id = %s AND quantity >= %s",
-            (data['quantity'], item_id, data['quantity'])
-        )
-    
-    db.commit()
-    if cursor.rowcount == 0:
-        return jsonify({"error": "Insufficient stock or item not found"}), 400
-    return jsonify({"message": "Inventory updated successfully"})
+        # If full update (Admin)
+        if 'full_update' in data and data['full_update']:
+            # Input Validation
+            if float(data['price']) < 0:
+                return jsonify({"error": "Price cannot be negative"}), 400
+            if int(data['quantity']) < 0:
+                return jsonify({"error": "Quantity cannot be negative"}), 400
+
+            cursor.execute(
+                "UPDATE inventory SET name = %s, price = %s, quantity = %s, image_url = %s WHERE id = %s",
+                (data['name'], data['price'], data['quantity'], data.get('image_url', ''), item_id)
+            )
+        else:
+            # Stock adjustment (Frontend/Checkout)
+            # Ensure quantity being subtracted is valid
+            sub_quantity = int(data.get('quantity', 0))
+            if sub_quantity <= 0:
+                return jsonify({"error": "Invalid adjustment quantity"}), 400
+
+            cursor.execute(
+                "UPDATE inventory SET quantity = quantity - %s WHERE id = %s AND quantity >= %s",
+                (sub_quantity, item_id, sub_quantity)
+            )
+        
+        db.commit()
+        if cursor.rowcount == 0:
+            return jsonify({"error": "Insufficient stock or item not found"}), 400
+        return jsonify({"message": "Inventory updated successfully"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # DELETE - Remove inventory item
 @app.route('/inventory/<int:item_id>', methods=['DELETE'])

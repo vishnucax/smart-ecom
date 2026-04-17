@@ -4,11 +4,15 @@ import { useNavigate } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faPencilAlt, faTrash, faPlus, faTimes, faSignOutAlt,
-  faBox, faCheckCircle, faExclamationCircle, faSpinner
+  faBox, faCheckCircle, faExclamationCircle, faSpinner,
+  faList, faClipboardList, faUser, faPhone, faMapMarkerAlt,
+  faCalendarAlt, faHistory
 } from '@fortawesome/free-solid-svg-icons'
 
 export default function AdminDashboard() {
+  const [activeTab, setActiveTab] = useState('inventory') // 'inventory' or 'orders'
   const [products, setProducts] = useState([])
+  const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState({ name: '', price: '', quantity: '', image_url: '' })
   const [editingId, setEditingId] = useState(null)
@@ -21,8 +25,12 @@ export default function AdminDashboard() {
       navigate('/admin/login')
       return
     }
-    fetchProducts()
-  }, [])
+    if (activeTab === 'inventory') {
+      fetchProducts()
+    } else {
+      fetchOrders()
+    }
+  }, [activeTab])
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type })
@@ -34,6 +42,14 @@ export default function AdminDashboard() {
     axios.get('http://localhost:5001/inventory')
       .then(res => setProducts(res.data))
       .catch(() => showToast('Failed to load products', 'error'))
+      .finally(() => setLoading(false))
+  }
+
+  const fetchOrders = () => {
+    setLoading(true)
+    axios.get('http://localhost:5004/payments')
+      .then(res => setOrders(res.data))
+      .catch(() => showToast('Failed to load orders', 'error'))
       .finally(() => setLoading(false))
   }
 
@@ -109,13 +125,28 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      <div className="flex justify-between items-center mb-10">
+      <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <p className="text-gray-400">Manage your product inventory</p>
+          <p className="text-gray-400">Manage products and track customer orders</p>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-400">{products.length} products</span>
+        <div className="flex items-center gap-4">
+          <div className="flex bg-gray-900 border border-gray-800 p-1 rounded-xl">
+            <button
+              onClick={() => setActiveTab('inventory')}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeTab === 'inventory' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'}`}
+            >
+              <FontAwesomeIcon icon={faList} className="mr-2" />
+              Inventory
+            </button>
+            <button
+              onClick={() => setActiveTab('orders')}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeTab === 'orders' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'}`}
+            >
+              <FontAwesomeIcon icon={faClipboardList} className="mr-2" />
+              Orders
+            </button>
+          </div>
           <button
             onClick={() => { sessionStorage.removeItem('adminToken'); navigate('/admin/login') }}
             className="flex items-center gap-2 bg-gray-800 hover:bg-red-500/20 hover:text-red-500 border border-gray-700 px-4 py-2 rounded-xl text-sm transition"
@@ -126,182 +157,252 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        {/* Form Section */}
-        <div className="lg:col-span-1">
-          <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl sticky top-24">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <FontAwesomeIcon icon={editingId ? faPencilAlt : faPlus} className="text-blue-400" />
-              {editingId ? 'Edit Product' : 'Add New Product'}
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="text-sm text-gray-400 mb-1 block">Product Name</label>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="e.g. Smart Watch"
-                  required
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition"
-                />
-              </div>
-              <div>
-                <label className="text-sm text-gray-400 mb-1 block">Price (₹)</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={form.price}
-                  onChange={(e) => setForm({ ...form, price: e.target.value })}
-                  placeholder="5000"
-                  required
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition"
-                />
-              </div>
-              <div>
-                <label className="text-sm text-gray-400 mb-1 block">Quantity</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={form.quantity}
-                  onChange={(e) => setForm({ ...form, quantity: e.target.value })}
-                  placeholder="100"
-                  required
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition"
-                />
-              </div>
-              <div>
-                <label className="text-sm text-gray-400 mb-1 block">Image URL (Optional)</label>
-                <input
-                  type="text"
-                  value={form.image_url}
-                  onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-                  placeholder="https://example.com/image.jpg"
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition"
-                />
-              </div>
-
-              {/* Image Preview */}
-              {form.image_url && (
-                <div className="rounded-xl overflow-hidden h-32 bg-gray-800">
-                  <img
-                    src={form.image_url}
-                    alt="Preview"
-                    className="w-full h-full object-cover"
-                    onError={(e) => { e.target.style.display = 'none' }}
+      {activeTab === 'inventory' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+          {/* Form Section */}
+          <div className="lg:col-span-1">
+            <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl sticky top-24">
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <FontAwesomeIcon icon={editingId ? faPencilAlt : faPlus} className="text-blue-400" />
+                {editingId ? 'Edit Product' : 'Add New Product'}
+              </h2>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Product Name</label>
+                  <input
+                    type="text"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    placeholder="e.g. Smart Watch"
+                    required
+                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition"
                   />
                 </div>
-              )}
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Price (₹)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.price}
+                    onChange={(e) => setForm({ ...form, price: e.target.value })}
+                    placeholder="5000"
+                    required
+                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Quantity</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={form.quantity}
+                    onChange={(e) => setForm({ ...form, quantity: e.target.value })}
+                    placeholder="100"
+                    required
+                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Image URL (Optional)</label>
+                  <input
+                    type="text"
+                    value={form.image_url}
+                    onChange={(e) => setForm({ ...form, image_url: e.target.value })}
+                    placeholder="https://example.com/image.jpg"
+                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition"
+                  />
+                </div>
 
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 text-white font-semibold py-3 rounded-xl transition"
-                >
-                  {submitting ? (
-                    <><FontAwesomeIcon icon={faSpinner} spin /> Saving...</>
-                  ) : (
-                    <><FontAwesomeIcon icon={editingId ? faPencilAlt : faPlus} />
-                      {editingId ? 'Update Product' : 'Add Product'}</>
-                  )}
-                </button>
-                {editingId && (
-                  <button
-                    type="button"
-                    onClick={handleCancel}
-                    className="flex items-center gap-1 bg-gray-700 hover:bg-gray-600 px-4 rounded-xl transition text-sm"
-                  >
-                    <FontAwesomeIcon icon={faTimes} /> Cancel
-                  </button>
+                {/* Image Preview */}
+                {form.image_url && (
+                  <div className="rounded-xl overflow-hidden h-32 bg-gray-800">
+                    <img
+                      src={form.image_url}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                      onError={(e) => { e.target.style.display = 'none' }}
+                    />
+                  </div>
                 )}
+
+                <div className="flex gap-2 pt-2">
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 text-white font-semibold py-3 rounded-xl transition"
+                  >
+                    {submitting ? (
+                      <><FontAwesomeIcon icon={faSpinner} spin /> Saving...</>
+                    ) : (
+                      <><FontAwesomeIcon icon={editingId ? faPencilAlt : faPlus} />
+                        {editingId ? 'Update Product' : 'Add Product'}</>
+                    )}
+                  </button>
+                  {editingId && (
+                    <button
+                      type="button"
+                      onClick={handleCancel}
+                      className="flex items-center gap-1 bg-gray-700 hover:bg-gray-600 px-4 rounded-xl transition text-sm"
+                    >
+                      <FontAwesomeIcon icon={faTimes} /> Cancel
+                    </button>
+                  )}
+                </div>
+              </form>
+            </div>
+          </div>
+
+          {/* List Section */}
+          <div className="lg:col-span-2">
+            {loading ? (
+              <div className="text-center py-20 text-gray-500 flex flex-col items-center gap-3">
+                <FontAwesomeIcon icon={faSpinner} spin className="text-3xl text-blue-400" />
+                Loading products...
               </div>
-            </form>
+            ) : (
+              <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
+                <table className="w-full text-left">
+                  <thead className="bg-gray-800/50 text-gray-400 text-xs uppercase tracking-wider">
+                    <tr>
+                      <th className="px-6 py-4 font-semibold">Product</th>
+                      <th className="px-6 py-4 font-semibold text-right">Price</th>
+                      <th className="px-6 py-4 font-semibold text-center">Stock</th>
+                      <th className="px-6 py-4 font-semibold text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-800">
+                    {products.map(product => (
+                      <tr key={product.id} className={`hover:bg-gray-800/30 transition ${editingId === product.id ? 'bg-blue-900/10 border-l-2 border-blue-500' : ''}`}>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            {product.image_url ? (
+                              <img src={product.image_url} alt={product.name} className="w-10 h-10 object-cover rounded-lg bg-gray-800" />
+                            ) : (
+                              <div className="w-10 h-10 bg-gray-800 flex items-center justify-center rounded-lg text-gray-500">
+                                <FontAwesomeIcon icon={faBox} />
+                              </div>
+                            )}
+                            <div>
+                              <div className="font-medium">{product.name}</div>
+                              <div className="text-xs text-gray-500">ID: {product.id}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-right text-green-400 font-medium">
+                          ₹{Number(product.price).toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            product.quantity > 10
+                              ? 'bg-green-500/10 text-green-500'
+                              : product.quantity > 0
+                                ? 'bg-yellow-500/10 text-yellow-500'
+                                : 'bg-red-500/10 text-red-500'
+                          }`}>
+                            {product.quantity === 0 ? 'Out of Stock' : product.quantity}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => handleEdit(product)}
+                              className="bg-blue-600/10 text-blue-500 hover:bg-blue-600 hover:text-white p-2 rounded-lg transition"
+                              title="Edit"
+                            >
+                              <FontAwesomeIcon icon={faPencilAlt} />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(product.id)}
+                              className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white p-2 rounded-lg transition"
+                              title="Delete"
+                            >
+                              <FontAwesomeIcon icon={faTrash} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
-
-        {/* List Section */}
-        <div className="lg:col-span-2">
+      ) : (
+        /* Orders Section */
+        <div className="space-y-6">
           {loading ? (
-            <div className="text-center py-20 text-gray-500 flex flex-col items-center gap-3">
-              <FontAwesomeIcon icon={faSpinner} spin className="text-3xl text-blue-400" />
-              Loading products...
-            </div>
+             <div className="text-center py-20 text-gray-500 flex flex-col items-center gap-3">
+                <FontAwesomeIcon icon={faSpinner} spin className="text-3xl text-blue-400" />
+                Loading orders...
+              </div>
           ) : (
             <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
-              <table className="w-full text-left">
+               <table className="w-full text-left">
                 <thead className="bg-gray-800/50 text-gray-400 text-xs uppercase tracking-wider">
                   <tr>
-                    <th className="px-6 py-4 font-semibold">Product</th>
-                    <th className="px-6 py-4 font-semibold text-right">Price</th>
-                    <th className="px-6 py-4 font-semibold text-center">Stock</th>
-                    <th className="px-6 py-4 font-semibold text-right">Actions</th>
+                    <th className="px-6 py-4 font-semibold">Order Detail</th>
+                    <th className="px-6 py-4 font-semibold">Customer</th>
+                    <th className="px-6 py-4 font-semibold text-right">Amount</th>
+                    <th className="px-6 py-4 font-semibold text-center">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-800">
-                  {products.map(product => (
-                    <tr key={product.id} className={`hover:bg-gray-800/30 transition ${editingId === product.id ? 'bg-blue-900/10 border-l-2 border-blue-500' : ''}`}>
+                   {orders.map(order => (
+                    <tr key={order.id} className="hover:bg-gray-800/30 transition">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          {product.image_url ? (
-                            <img src={product.image_url} alt={product.name} className="w-10 h-10 object-cover rounded-lg bg-gray-800" />
-                          ) : (
-                            <div className="w-10 h-10 bg-gray-800 flex items-center justify-center rounded-lg text-gray-500">
-                              <FontAwesomeIcon icon={faBox} />
+                           <div className="w-10 h-10 bg-blue-500/10 flex items-center justify-center rounded-lg text-blue-400">
+                              <FontAwesomeIcon icon={faHistory} />
                             </div>
-                          )}
-                          <div>
-                            <div className="font-medium">{product.name}</div>
-                            <div className="text-xs text-gray-500">ID: {product.id}</div>
-                          </div>
+                            <div>
+                               <div className="font-bold">{order.product_name}</div>
+                               <div className="text-xs text-gray-500 flex items-center gap-1">
+                                  <FontAwesomeIcon icon={faCalendarAlt} /> 
+                                  {new Date(order.created_at).toLocaleDateString()}
+                               </div>
+                               <div className="text-xs text-blue-400">Qty: {order.quantity}</div>
+                            </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-right text-green-400 font-medium">
-                        ₹{Number(product.price).toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          product.quantity > 10
-                            ? 'bg-green-500/10 text-green-500'
-                            : product.quantity > 0
-                              ? 'bg-yellow-500/10 text-yellow-500'
-                              : 'bg-red-500/10 text-red-500'
-                        }`}>
-                          {product.quantity === 0 ? 'Out of Stock' : product.quantity}
-                        </span>
+                      <td className="px-6 py-4">
+                         <div className="space-y-1">
+                            <div className="text-sm font-medium flex items-center gap-2">
+                               <FontAwesomeIcon icon={faUser} className="text-gray-500 text-xs" />
+                               {order.customer_name}
+                            </div>
+                            <div className="text-xs text-gray-400 flex items-center gap-2">
+                               <FontAwesomeIcon icon={faMapMarkerAlt} className="text-gray-500" />
+                               {order.customer_city}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                               {order.customer_email}
+                            </div>
+                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => handleEdit(product)}
-                            className="bg-blue-600/10 text-blue-500 hover:bg-blue-600 hover:text-white p-2 rounded-lg transition"
-                            title="Edit"
-                          >
-                            <FontAwesomeIcon icon={faPencilAlt} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(product.id)}
-                            className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white p-2 rounded-lg transition"
-                            title="Delete"
-                          >
-                            <FontAwesomeIcon icon={faTrash} />
-                          </button>
-                        </div>
+                         <div className="font-bold text-green-400">₹{Number(order.final_amount).toLocaleString()}</div>
+                         <div className="text-xs text-gray-500">Disc: ₹{Number(order.discount_applied).toLocaleString()}</div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                         <span className="bg-green-500/10 text-green-500 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-tight">
+                            {order.status}
+                         </span>
                       </td>
                     </tr>
-                  ))}
-                  {products.length === 0 && (
-                    <tr>
-                      <td colSpan="4" className="text-center py-20 text-gray-500">No products found. Add your first product!</td>
-                    </tr>
-                  )}
+                   ))}
+                   {orders.length === 0 && (
+                     <tr>
+                        <td colSpan="4" className="text-center py-20 text-gray-500">No orders found yet.</td>
+                     </tr>
+                   )}
                 </tbody>
-              </table>
+               </table>
             </div>
           )}
         </div>
-      </div>
+      )}
     </div>
   )
 }

@@ -30,6 +30,11 @@ CREATE TABLE IF NOT EXISTS payments (
     discount_applied DECIMAL(10, 2) DEFAULT 0,
     final_amount DECIMAL(10, 2) NOT NULL,
     status VARCHAR(50) DEFAULT 'success',
+    customer_name VARCHAR(255),
+    customer_email VARCHAR(255),
+    customer_phone VARCHAR(50),
+    customer_address TEXT,
+    customer_city VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

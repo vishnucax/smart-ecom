@@ -27,11 +27,18 @@ export default function Checkout() {
         axios.post('http://localhost:5004/payment', {
           product_id: item.product_id,
           quantity: item.quantity,
-          ...(discountCode && { discount_code: discountCode })
+          ...(discountCode && { discount_code: discountCode }),
+          customer_name: form.name,
+          customer_email: form.email,
+          customer_phone: form.phone,
+          customer_address: form.address,
+          customer_city: form.city
         })
       )
 
       const results = await Promise.all(paymentPromises)
+      
+      // Clear cart on backend
       await axios.delete('http://localhost:5002/cart')
 
       const aggregatedResult = {
@@ -48,7 +55,7 @@ export default function Checkout() {
       navigate('/order-confirmed', { state: { result: aggregatedResult, form } })
     } catch (err) {
       console.error(err)
-      setError('Payment failed. Please try again.')
+      setError(err.response?.data?.error || 'Payment failed. Please try again.')
       setLoading(false)
     }
   }
